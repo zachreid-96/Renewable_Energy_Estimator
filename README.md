@@ -2,6 +2,8 @@
 A program built to 'estimate' how many Solar Panels, Solar Farms, and Wind Turbines needed to produce enough (or more!) than what the US used in 2021.
 The US used approximately 4,112 billion kiloWatt Hours (kWH) in 2021.
 
+This Project was built in Eclipse IDE for Java. The GUI portion of the project used JavaFX, it is needed to run the program.
+
 Each Class is full of comments, some more than others, but most of what needs a comment has one. Here is a short break down of the classes used:
 
 ## Classes
@@ -67,5 +69,19 @@ platforms (sorry MacOS), as I currently use Linux Mint and Windows 10 platforms.
 
 Again this is a hobby project of mine, and just an estimator, it has been a fun project to work on. If something is inaccurate, report it as an issue
 and please be respectful about it. 
+
+## Resources Used
+
+Here is a mostly complete list of resources used to collect data from. In no particular order. 
+- [Wind Turbine Sizing and Wattage Ratings](https://www.energy.gov/eere/articles/wind-turbines-bigger-better)
+- [Solar Industrial Farm Size](https://www.ysgsolar.com/blog/top-5-solar-farm-land-requirements-ysg-solar)
+- [Wind Turbine Formulas](https://www.omnicalculator.com/ecology/wind-turbine)
+- [Wind Speeds at 100m Above Surface](https://www.nrel.gov/gis/wind-resource-maps.html)
+- [Square Miles of US States](https://statesymbolsusa.org/symbol-official-item/national-us/uncategorized/states-size)
+- [Air Pressure Formula](https://www.engineeringtoolbox.com/air-altitude-pressure-d_462.html)
+- [Air Density Formlas](https://www.brisbanehotairballooning.com.au/calculate-air-density/)
+- [US State Mean Elevation](https://en.wikipedia.org/wiki/List_of_U.S._states_and_territories_by_elevation)
+- [Average Annual Temperature (F) of US States](https://www.currentresults.com/Weather/US/average-annual-state-temperatures.php)
+- [Average Humidity Levels (%) of US States](https://www.currentresults.com/Weather/US/annual-average-humidity-by-state.php)
 
 ### Thanks for Checking Out my Project!
