@@ -21,11 +21,9 @@ public class Renewable_Energy {
 	 **/
 	
 	static ArrayList<State> states = new ArrayList<State>();
-	static ArrayList<State> useableStates = new ArrayList<State>();
 	static ArrayList<State> useableSolarStates = new ArrayList<State>();
 	static ArrayList<State> useableWindStates = new ArrayList<State>();
-	static ArrayList<State> allStatesUsed = new ArrayList<State>();
-	static State state;
+	static State initializeState;
 	final static Random randomGen = new Random();
 	
 	/** Parameters:
@@ -46,8 +44,9 @@ public class Renewable_Energy {
 	 ** wattHigh = High end of the Rated Watt in kW
 	 **/
 
-	static Solar_Panel Commercial_Panel;
-	static Solar_Panel Residential_Panel;
+	static Solar_Panel monoPERC_72x144_415;
+	static Solar_Panel monoPERC_66x132_390;
+	static Solar_Panel monoPERC_60x120_345;
 	static ArrayList<Solar_Panel> solarPanelList = new ArrayList<Solar_Panel>();
 
 	/** Parameters:
@@ -61,7 +60,13 @@ public class Renewable_Energy {
 	static Wind_Turbine turbine_295;
 	static Wind_Turbine turbine_328;
 	static ArrayList<Wind_Turbine> windTurbineList = new ArrayList<Wind_Turbine>();
-		
+	
+	static Wind_Farm smallWindFarm;
+	static Wind_Farm largeWindFarm;
+	static int[] smallWindFarmSize;
+	static int[] largeWindFarmSize;
+	static ArrayList<Wind_Farm> windFarmList = new ArrayList<Wind_Farm>();
+	
 	static ArrayList<String> energySources = new ArrayList<String>();
 	
 	/**
@@ -83,10 +88,11 @@ public class Renewable_Energy {
 	 **/
 		
 	static long avgPanelCount = 0;
+	static long avgTurbineCount = 0;
 	static long avgEnergyGen = 0;
-	static long avgMiles = 0;
-	static long avgFarmsWithTurbine = 0;
-	static long avgFarmsWithoutTurbine = 0;
+	static long avgFeet = 0;
+	static long avgSolarFarms = 0;
+	static long avgWindFarms = 0;
 	static long avgFarmTotal = 0;
 	
 	/**
@@ -97,19 +103,15 @@ public class Renewable_Energy {
 	
 	public static void clearStats() {
 		
-		for (State state : useableStates) {
+		for (State state : states) {
 			
 			state.usedLand = 0;
 			state.powerGenerated = 0;
-			state.industrialFarm_withTurbine = 0;
-			state.industrialFarm_withoutTurbine = 0;
-			state.windTurbinesUsed = 0;
-			state.solarFarmsUsed = 0;
-			state.microGrid_withoutTurbine = 0;
-			state.microGrid_withTurbine = 0;
-			state.windTurbineTypes = new int[] { 0, 0, 0 };
-			state.microGrids_Used = 0;
-			state.industrialGrids_Used = 0;
+			state.microGrids_Used = new long[] {0,0};
+			state.industrialGrids_Used = new long[] {0,0};
+			state.windFarms_262 = new long[] {0,0};
+			state.windFarms_295 = new long[] {0,0};
+			state.used = false;
 		}
 	} // End clearStats
 	
@@ -120,205 +122,12 @@ public class Renewable_Energy {
 	 ** 	This does not mess up the Writing Test Function
 	 **/
 	
-	public static void getStats(boolean turbinesNearSolarFarms, Integer i) {
-		if (turbinesNearSolarFarms) {
-			getStatsNotDistinguished(i);
-		} else if (!turbinesNearSolarFarms) {
-			getStatsDistinguished(i);
-		}
+	public static void getStats(Integer i) {
 		
-	} // End getStats
-	
-	/** 
-	 ** getStatsNotDistinguished(Integer i): Tries to add a Wind Turbine near every Solar Farm created
-	 ** 
-	 ** Calculates the amount of area a Solar Farm can Have
-	 ** Calculates the amount of Solar Panels will fit inside said farm
-	 ** Picks a State at Random
-	 ** Retrieves Peak Sun Hours (psh) from State
-	 ** Calculates the amount of kiloWatt Hours (kWh) of a solar panel farm via psh
-	 ** Adds totals to tracker variables
-	 ** Calculates Wind Power for state based on elevation, air Density, and randomly chosen windSpeed of state
-	 ** If viable power source it is included in stats, else not included (but still tracked in farmWithoutTurbine variable)
-	 ** Calls writeTest to write the test result in a file
-	 ** 
-	 ** @param i = test number
-	 ** @param i = null Value if ran as a single test
-	 **/
-	
-	public static void getStatsNotDistinguished(Integer i) {
+		// Variables to keep track of the generated stats
 		
 		ArrayList<Long> statsList = new ArrayList<Long>();
 		
-		// Variables to keep track of the generated stats
-		long totalPower = 0;
-		long totalPanel = 0;
-		long totalLandUsed = 0;
-		long totalFarms = 0;
-		long turbine262_Used = 0;
-		long turbine295_Used = 0;
-		long turbine328_Used = 0;
-		long microGrids_WithoutTurbine = 0;
-		long microGrids_WithTurbine = 0;
-		long industrialGrid_WithoutTurbine = 0;
-		long industrialGrid_WithTurbine = 0;
-		
-		// Variable 'initialization' (holders) for various Calculated fields below
-		State currState;
-		double sunHours;
-		long farmArea;
-		long panelCount;
-		long windPower = -1;
-		long powerGen;
-		
-		// Loops through and choose a state from said list at random
-		while (totalPower < targetHours) {
-			
-			Solar_Panel usedPanel = solarPanelList.get(randomGen.nextInt(solarPanelList.size()));
-			Solar_Farm usedFarm = solarFarmList.get(randomGen.nextInt(solarFarmList.size()));
-			Wind_Turbine usedTurbine = new Wind_Turbine();
-			
-			if (usedFarm.getName().equals("IndustrialGrid")) {
-				int solarFarmSize = (int) (Math.random() * (200 - 10) + 10);
-				usedFarm = new Solar_Farm(solarFarmSize, "IndustrialGrid");
-			}
-			
-			if (totalPower >= targetHours) {
-				break;
-			}
-
-			currState = useableStates.get(randomGen.nextInt(useableStates.size()));
-			sunHours = currState.getPSH();
-
-			farmArea = usedFarm.getTotalArea();
-
-			if (currState.usedLand + farmArea < currState.getUseableLand()) {
-
-				panelCount = usedFarm.getPanelCount(usedPanel);
-				
-				totalPanel += panelCount;
-				avgPanelCount += panelCount;
-
-				if (panelCount != -1) {
-					powerGen = (long) Math.ceil(usedPanel.getYearWatt(sunHours) * panelCount);
-					currState.powerGenerated += powerGen;
-					currState.usedLand += farmArea;
-					totalLandUsed += farmArea;
-					avgMiles += farmArea;
-
-					totalPower += powerGen;
-					avgEnergyGen += powerGen;
-					
-					totalFarms++;
-					avgFarmTotal++;
-					
-					// If WindPower if viable it uses it
-					// If not, then it does not use it
-					
-					if (windTurbineList.size() > 0) {
-						usedTurbine = windTurbineList.get(randomGen.nextInt(windTurbineList.size()));
-						windPower = usedTurbine.getOutputPower(currState.getWindSpeed(), currState.getDensity(usedTurbine.getHeight()));
-					}
-					
-					if (windPower != -1) {
-						
-						currState.powerGenerated += windPower;
-						totalPower += windPower;
-						
-						avgEnergyGen += windPower;
-						avgFarmsWithTurbine++;
-						
-						// Keeps track of specific farms (can be utilized later for data collection)
-						
-						switch(usedFarm.getName()) {
-						case "MicroGrid":
-							microGrids_WithTurbine++;
-							currState.microGrid_withTurbine++;
-							break;
-						case "IndustrialGrid":
-							industrialGrid_WithTurbine++;
-							currState.industrialFarm_withTurbine++;
-							break;
-						} // End switch(usedFarm.getName())
-						
-						// Keeps track of specific farms (can be utilized later for data collection)
-						
-						switch(usedTurbine.getName()) {
-						case "Turbine 262":
-							turbine262_Used++;
-							currState.windTurbineTypes[0]++;
-							break;
-						case "Turbine 295":
-							turbine295_Used++;
-							currState.windTurbineTypes[1]++;
-							break;
-						case "Turbine 328":
-							turbine328_Used++;
-							currState.windTurbineTypes[2]++;
-							break;
-						} // End switch(usedTurbine.getName())
-						
-					} else {
-						
-						avgFarmsWithoutTurbine++;
-						
-						// Keeps track of specific farms (can be utilized later for data collection)
-						
-						switch(usedFarm.getName()) {
-						case "MicroGrid":
-							microGrids_WithoutTurbine++;
-							currState.microGrid_withoutTurbine++;
-							break;
-						case "IndustrialGrid":
-							industrialGrid_WithoutTurbine++;
-							currState.industrialFarm_withoutTurbine++;
-							break;
-						} // End switch(usedFarm.getName())
-					} // End windPower != -1 If/Else Block
-				} // End panelCount != -1 If/Else Block
-			} // End (currState.usedLand + farmArea < currState.getUseableLand()) If Block
-		} // End while(totalPower < targetHours) Loop
-		
-		// Adding all stats to statsList to be passed to writeTest Function
-		
-		statsList.add(totalPower);
-		statsList.add(totalPanel);
-		statsList.add(totalLandUsed);
-		statsList.add(totalFarms);
-		statsList.add(turbine262_Used);
-		statsList.add(turbine295_Used);
-		statsList.add(turbine328_Used);
-		statsList.add(microGrids_WithoutTurbine);
-		statsList.add(microGrids_WithTurbine);
-		statsList.add(industrialGrid_WithoutTurbine);
-		statsList.add(industrialGrid_WithTurbine);
-		
-		// Calls the writeTest function to write the test in a ".txt" file
-		writeTest(i, statsList, true);
-	} // End getStats
-	
-	/** 
-	 ** getStatsDistinguished(Integer i): Picks either a Wind Turbine or a Solar Farm Layout
-	 ** 
-	 ** Calculates the amount of area a Solar Farm can Have
-	 ** Calculates the amount of Solar Panels will fit inside said farm
-	 ** Picks a State at Random
-	 ** Retrieves Peak Sun Hours (psh) from State
-	 ** Calculates the amount of kiloWatt Hours (kWh) of a solar panel farm via psh
-	 ** Adds totals to tracker variables
-	 ** Calculates Wind Power for state based on elevation, air Density, and randomly chosen windSpeed of state
-	 ** If viable power source it is included in stats, else not included (but still tracked in farmWithoutTurbine variable)
-	 ** Calls writeTest to write the test result in a file
-	 ** 
-	 ** @param i = test number
-	 ** @param i = null Value if ran as a single test
-	 **/
-	
-	public static void getStatsDistinguished(Integer i) {
-		
-		ArrayList<Long> statsList = new ArrayList<Long>();
-		
-		// Variables to keep track of the generated stats
 		long totalPower = 0;
 		long totalPanel = 0;
 		long totalLandUsed = 0;
@@ -330,11 +139,8 @@ public class Renewable_Energy {
 		long turbine295_Used = 0;
 		long turbine328_Used = 0;
 		long windFarms_Used = 0;
-
-		// Variable 'initialization' (holders) for various Calculated fields below
-		long powerGen;
+		long powerGen = 0;
 		
-		// Loops through and choose a state from said list at random
 		while (totalPower < targetHours) {
 			
 			State currState;
@@ -350,99 +156,132 @@ public class Renewable_Energy {
 			
 			String usedEnergySource = energySources.get(randomGen.nextInt(energySources.size()));
 			
-			// Solar Farm Block
-			
 			if (usedEnergySource.equals("Solar Farm")) {
+				
+				if (useableSolarStates.size() == 0) {
+					System.out.println("OUT OF STATES");
+					break;
+				}
 				
 				currState = useableSolarStates.get(randomGen.nextInt(useableSolarStates.size()));
 				
 				Solar_Farm usedFarm = solarFarmList.get(randomGen.nextInt(solarFarmList.size()));
 				Solar_Panel usedPanel = solarPanelList.get(randomGen.nextInt(solarPanelList.size()));
-
-				if (usedFarm.getName().equals("Industrial Farm")) {
+				
+				if (usedFarm.getName().equals("IndustrialGrid")) {
 					int solarFarmSize = (int) (Math.random() * (200 - 10) + 10);
-					usedFarm = new Solar_Farm(solarFarmSize, "Industrial Farm");
+					usedFarm = new Solar_Farm(solarFarmSize, "IndustrialGrid", usedPanel);
+				} else if (usedFarm.getName().equals("MicroGrid")) {
+					usedFarm = new Solar_Farm(3, "MicroGrid", usedPanel);
 				}
-
+				
 				farmArea = usedFarm.getTotalArea();
 				sunHours = currState.getPSH();
-
-				if (currState.usedLand + farmArea < currState.getUseableLand()) {
-
-					panelCount = usedFarm.getPanelCount(usedPanel);
-
-					totalPanel += panelCount;
-					avgPanelCount += panelCount;
-
-					if (panelCount != -1) {
+				
+				if ((currState.usedLand + farmArea) < currState.getUseableLand()) {
+					
+					panelCount = usedFarm.getPanelCount();
+					currState.used = true;
+					
+					if (panelCount > 0) {
 						powerGen = (long) Math.ceil(usedPanel.getYearWatt(sunHours) * panelCount);
 						currState.powerGenerated += powerGen;
 						currState.usedLand += farmArea;
 						totalLandUsed += farmArea;
-						avgMiles += farmArea;
-
+						
 						totalPower += powerGen;
-						avgEnergyGen += powerGen;
-
 						solarFarms_Used++;
-						currState.solarFarmsUsed++;
 						totalFarms++;
+						totalPanel += panelCount;
+						
+						// Variables for Averages in Larger Test Pools
+						
+						avgEnergyGen += powerGen;
 						avgFarmTotal++;
+						avgFeet += farmArea;
+						avgPanelCount += panelCount;
+						avgSolarFarms++;
 						
 						// Keeps track of specific farms (can be utilized later for data collection)
 						
 						switch(usedFarm.getName()) {
 						case "MicroGrid":
 							microGrids_Used++;
-							currState.microGrids_Used++;
+							currState.microGrids_Used[0]++;
+							currState.microGrids_Used[1] += panelCount;
 							break;
 						case "IndustrialGrid":
 							industrialGrids_Used++;
-							currState.industrialGrids_Used++;
+							currState.industrialGrids_Used[0]++;
+							currState.industrialGrids_Used[1] += panelCount;
 							break;
 						} // End switch(usedFarm.getName())
 					}
+				} else if ((currState.usedLand + farmArea) > currState.getUseableLand()) {
+					useableSolarStates.remove(currState);
 				}
+				System.out.println("totalFarms: " + totalFarms);
+				System.out.println("useableSolarStates.size(): " + useableSolarStates.size());
 				// End Solar Farm Block and Begin Wind Power Block
 			} else if (usedEnergySource.equals("Wind Power")) {
 				
-				long windPower;
-				
 				// Chooses a state 'randomly' from user selected presets (by having a min. windSpeed >= user picked windSped)
+				
+				if (useableWindStates.size() == 0) {
+					System.out.println("OUT OF STATES");
+					break;
+				}
 				
 				currState = useableWindStates.get(randomGen.nextInt(useableWindStates.size()));
 				
 				Wind_Turbine usedTurbine = windTurbineList.get(randomGen.nextInt(windTurbineList.size()));
+				Wind_Farm usedFarm = windFarmList.get(randomGen.nextInt(windFarmList.size()));
 				
-				windPower = usedTurbine.getOutputPower(currState.getWindSpeed(), currState.getDensity(usedTurbine.getHeight()));
+				if (usedFarm.getName().equals("SmallWind")) {
+					usedFarm = new Wind_Farm("SmallWind", currState.getWindSpeed(),
+							currState.getDensity(usedTurbine.getHeight()), usedTurbine, smallWindFarmSize);
+				} else if (usedFarm.getName().equals("LargeWind")) {
+					usedFarm = new Wind_Farm("LargeWind", currState.getWindSpeed(),
+							currState.getDensity(usedTurbine.getHeight()), usedTurbine, largeWindFarmSize);
+				}
+
+				if (currState.usedLand + usedFarm.getArea_Feet() > currState.getUseableLand()) {
+					useableWindStates.remove(currState);
+				}
 				
-				currState.usedLand += usedTurbine.getArea();
-				totalLandUsed += usedTurbine.getArea();
-				avgMiles += usedTurbine.getArea();
-				
-				currState.powerGenerated += windPower;
-				currState.windTurbinesUsed++;
-				
-				windFarms_Used++;
-				totalPower += windPower;
-				totalFarms++;
-				avgFarmTotal++;
-				
-				// Keeps track of specific farms (can be utilized later for data collection)
-				
-				switch(usedTurbine.getName()) {
-				case "Turbine 262":
-					turbine262_Used++;
-					currState.windTurbineTypes[0]++;
-					break;
-				case "Turbine 295":
-					turbine295_Used++;
-					currState.windTurbineTypes[1]++;
-					break;
-				case "Turbine 328":
-					turbine328_Used++;
-					currState.windTurbineTypes[2]++;
-					break;
+				if ((currState.usedLand + usedFarm.getArea_Feet() < currState.getUseableLand())
+						&& (usedFarm.getWindPower_Farm() > 0)) {
+					
+					currState.used = true;
+					
+					switch(usedTurbine.getName()) {
+					case "Turbine 262":
+						turbine262_Used++;
+						currState.windFarms_262[0]++;
+						currState.windFarms_262[1] += usedFarm.getTurbineCount();
+						break;
+					case "Turbine 295":
+						turbine295_Used++;
+						currState.windFarms_295[0]++;
+						currState.windFarms_295[1] += usedFarm.getTurbineCount();
+						break;
+					}
+					
+					currState.usedLand += usedFarm.getArea_Feet();
+					currState.powerGenerated += usedFarm.getWindPower_Farm();
+					totalLandUsed += usedFarm.getArea_Feet();
+					totalPower += usedFarm.getWindPower_Farm();
+					totalFarms++;
+					windFarms_Used++;
+					
+					// Variables for Averages in Larger Test Pools
+					
+					avgEnergyGen += usedFarm.getWindPower_Farm();
+					avgFarmTotal++;
+					avgFeet += usedFarm.getArea_Feet();
+					avgWindFarms++;
+					avgTurbineCount += usedFarm.getTurbineCount();
+					
 				}
 				
 			} // End WindPower
@@ -450,7 +289,7 @@ public class Renewable_Energy {
 		} // End While Loop
 		
 		// Adding all stats to statsList to be passed to writeTest Function
-		
+
 		statsList.add(totalPower);
 		statsList.add(totalPanel);
 		statsList.add(totalLandUsed);
@@ -462,11 +301,11 @@ public class Renewable_Energy {
 		statsList.add(turbine295_Used);
 		statsList.add(turbine328_Used);
 		statsList.add(windFarms_Used);
-		
+
 		// Calls the writeTest function to write the test in a ".txt" file
-		writeTest(i, statsList, false);
+		writeTest(i, statsList);
 		
-	} // End getStatsDistinguished
+	} // End getStats
 	
 	/**
 	 ** Initializes various Renewable Energy Sources
@@ -487,17 +326,26 @@ public class Renewable_Energy {
 		case "Wind Turbine (328 ft.)":
 			initializeTurbine_328();
 			break;
-		case "Residential Panel (60 cells)":
-			initializeResidential_Panel();
+		case "Mono PERC 66 Cell - 390W":
+			initializeMonoPERC_66x132_390();
 			break;
-		case "Industrial Panel (72 cells)":
-			initializeCommercial_Panel();
+		case "Mono PERC 72 Cell - 415W":
+			initializeMonoPERC_72x144_415();
+			break;
+		case "Mono PERC 60 Cell - 345W":
+			initializeMonoPERC_60x120_345();
 			break;
 		case "Micro Farm":
 			initializeMicroGrid();
 			break;
 		case "Industrial Farm":
 			initializeIndustrialGrid();
+			break;
+		case "Small (10-150 Turbines)":
+			initializeSmallWind();
+			break;
+		case "Large (100-250 Turbines)":
+			initializeLargeWind();
 			break;
 		}
 	} // End initializeEnergySources
@@ -535,21 +383,27 @@ public class Renewable_Energy {
 		}
 	} // End initializeTurbine_295
 	
-	public static void initializeCommercial_Panel() {
+	public static void initializeMonoPERC_72x144_415() {
 		
-		Commercial_Panel = new Solar_Panel(39, 77, 72, 350, 400);
-		solarPanelList.add(Commercial_Panel);
+		monoPERC_72x144_415 = new Solar_Panel(41, 82, 72, 415, 439);
+		solarPanelList.add(monoPERC_72x144_415);
 	} // End initializeCommercial_Panel
 	
-	public static void initializeResidential_Panel() {
+	public static void initializeMonoPERC_66x132_390() {
 		
-		Residential_Panel = new Solar_Panel(39, 66, 60, 250, 300);
-		solarPanelList.add(Residential_Panel);
+		monoPERC_66x132_390 = new Solar_Panel(41, 75, 66, 390, 439);
+		solarPanelList.add(monoPERC_66x132_390);
+	} // End initializeResidential_Panel
+	
+	public static void initializeMonoPERC_60x120_345() {
+
+		monoPERC_60x120_345 = new Solar_Panel(41, 69, 60, 345, 319);
+		solarPanelList.add(monoPERC_66x132_390);
 	} // End initializeResidential_Panel
 	
 	public static void initializeMicroGrid() {
 
-		solarMicroGrid = new Solar_Farm(2, "MicroGrid");
+		solarMicroGrid = new Solar_Farm("MicroGrid");
 		solarFarmList.add(solarMicroGrid);
 		
 		if (energySources.indexOf("Solar Farm") == -1) {
@@ -568,6 +422,30 @@ public class Renewable_Energy {
 			energySources.add("Solar Farm");
 		}
 	} // End initializeResidential_Panel
+	
+	public static void initializeSmallWind() {
+
+		smallWindFarm = new Wind_Farm("SmallWind");
+		windFarmList.add(smallWindFarm);
+		smallWindFarmSize = new int[] { 10, 150 };
+		
+		if (energySources.indexOf("Wind Farm") == -1) {
+			// System.out.println("Added - 5");
+			energySources.add("Wind Farm");
+		}
+	}
+
+	public static void initializeLargeWind() {
+
+		largeWindFarm = new Wind_Farm("LargeWind");
+		windFarmList.add(largeWindFarm);
+		largeWindFarmSize = new int[] { 100, 250 };
+
+		if (energySources.indexOf("Wind Farm") == -1) {
+			// System.out.println("Added - 5");
+			energySources.add("Wind Farm");
+		}
+	}
 	
 	// Called by Renewable_Energy_GUI and sets targetHours from user Specified Field (measured in kWH)
 	
@@ -590,8 +468,8 @@ public class Renewable_Energy {
 			
 			while ((line = reader.readLine()) != null) {
 				// System.out.println(line);
-				state = new State(line);
-				states.add(state);
+				initializeState = new State(line);
+				states.add(initializeState);
 			}
 			reader.close();
 			
@@ -605,40 +483,30 @@ public class Renewable_Energy {
 	 ** Only states that have a STARTING PSH greater than master PSH will be included in ArrayList
 	 **/
 	
-	public static void populateUseableStates(boolean turbinesNearSolarFarms, double valuePSH, double valueWindSpeed) {
+	public static void populateUseableStates(double valuePSH, double valueWindSpeed) {
 		
-		/**
-		 ** Populates useableStates if placing Wind Turbines near created Solar Farms
-		 ** Populates useableSolarStates/useableWindStates if not placing Wind Turbines near created Solar Farms
-		 ** useableSolarStates use valuePSH (user Specified Field) to populate
-		 ** useableWindStates use valueWindSpeed (user Specified Field) to populate
-		 **/
-		
-		if (turbinesNearSolarFarms) {
-			for (State state : states) {
-				if (state.getPSH() >= valuePSH) {
-					useableStates.add(state);
+		if (solarFarmList.size() != 0) {
+			
+			if (useableSolarStates.size() > 0) { useableSolarStates.clear(); }
+			
+			for (State solarState : states) {
+				if (solarState.getPSH() >= valuePSH) {
+					useableSolarStates.add(solarState);
 				}
 			}
-		} else if (!turbinesNearSolarFarms) {
-			for (State state : states) {
-				if (state.getPSH() >= valuePSH) {
-					useableSolarStates.add(state);
-					
-					if (allStatesUsed.indexOf(state) == -1) {
-						allStatesUsed.add(state);
-					}
-					
-				}
-				if (state.getWindSpeed()[0] >= valueWindSpeed) {
-					useableWindStates.add(state);
-					
-					if (allStatesUsed.indexOf(state) == -1) {
-						allStatesUsed.add(state);
-					}
+		} // End solarFarm block
+		
+		if (windTurbineList.size() != 0) {
+			
+			if (useableWindStates.size() > 0) { useableWindStates.clear(); }
+			
+			for (State windState : states) {
+				if (windState.getWindSpeed()[0] >= valueWindSpeed) {
+					useableWindStates.add(windState);
 				}
 			}
-		}
+		} // End windFarm block
+		
 	} // End populateUseableStates
 	
 	/**
@@ -670,136 +538,63 @@ public class Renewable_Energy {
 	 ** These output stats are complete adjustable to whatever data is needed (or wanted)
 	 **/
 	
-	public static void writeTest(Integer i, ArrayList<Long> statsList, boolean placeTurbinesNearFarms) {
-		
-		//System.out.println("Writing Stats - START");
-		//System.out.println();
+	public static void writeTest(Integer i, ArrayList<Long> statsList) {
 		
 		// fileName is unique to the test number (test #1 is "test_1.txt" and test #47 is "test_47.txt")
 		String fileName;
 		if (i == null) {
-			fileName = "Testing_Data/test";
+			fileName = "Testing_Data/test.txt";
 		} else {
-			fileName = "Testing_Data/test_" + i;
+			fileName = "Testing_Data/test_" + i + ".txt";
 		}
 		
-		if (placeTurbinesNearFarms) {
-
-			try {
-				file = new File(fileName);
-				file.createNewFile();
-				writer = new FileWriter(file);
-
-				for (State state : useableStates) {
-
+		try {
+			file = new File(fileName);
+			file.createNewFile();
+			writer = new FileWriter(file);
+			
+			for (State state : states) {
+				if (state.used) {
+					
 					writer.write(state.getName() + "\n");
 					writer.write("\tUsed Land: " + state.usedLand + "(ft^2)\n");
-					writer.write("\tUsed Land: " + convertSqFeet_ToSqAcre(state.usedLand) + "(acre^2)\n");
-					writer.write("\tUsed Land: " + covertSqFeet_ToSqMiles(state.usedLand) + "(mi^2)\n");
+					writer.write("\tUsed Land: " + Conversions.convertSqFeet_ToSqAcre(state.usedLand) + "(acre^2)\n");
+					writer.write("\tUsed Land: " + Conversions.convertSqFeet_ToSqMiles(state.usedLand) + "(mi^2)\n");
 					writer.write("\tPower Gen: " + state.powerGenerated + " (kWh)\n");
-					writer.write("\tTurbine 262's: " + state.windTurbineTypes[0] + "\n");
-					writer.write("\tTurbine 295's: " + state.windTurbineTypes[1] + "\n");
-					writer.write("\tTurbine 328's: " + state.windTurbineTypes[2] + "\n");
-					writer.write("\tMicro Grids w/o Turbines: " + state.microGrid_withoutTurbine + "\n");
-					writer.write("\tMicro Grids w/ Turbines: " + state.microGrid_withTurbine + "\n");
-					writer.write("\tIndustrial Grids w/o Turbines: " + state.industrialFarm_withoutTurbine + "\n");
-					writer.write("\tIndustrial Grids w/ Turbines: " + state.industrialFarm_withTurbine + "\n");
+					writer.write("\tMicroGrids: " + state.microGrids_Used[0] + 
+							" || Total Panels: " + state.microGrids_Used[1] + "\n");
+					writer.write("\tIndustrialGrids: " + state.industrialGrids_Used[0] + 
+							" || Total Panels: " + state.industrialGrids_Used[1] + "\n");
+					writer.write("\tWindFarms_262: " + state.windFarms_262[0] + 
+							" || Total Turbines: " + state.windFarms_262[1] + "\n");
+					writer.write("\tWindFarms_295: " + state.windFarms_295[0] + 
+							" || Total Turbines: " + state.windFarms_295[1] + "\n");
 				}
-
-				writer.write("\nTotal Power Gen: " + statsList.get(0) + " (kWh)\n");
-				writer.write("Needed Power Gen: " + targetHours + " (kWh)\n");
-				writer.write("PanelCount: " + statsList.get(1) + "\n");
-				writer.write("Used Land: " + statsList.get(2) + "(ft^2)\n");
-				writer.write("Used Land: " + convertSqFeet_ToSqAcre(statsList.get(2)) + "(acre^2)\n");
-				writer.write("Used Land: " + covertSqFeet_ToSqMiles(statsList.get(2)) + "(mi^2)\n");
-				writer.write("Turbine 262's: " + statsList.get(4) + "\n");
-				writer.write("Turbine 295's: " + statsList.get(5) + "\n");
-				writer.write("Turbine 328's: " + statsList.get(6) + "\n");
-				writer.write("Micro Grids w/o Turbines: " + statsList.get(7) + "\n");
-				writer.write("Micro Grids w/ Turbines: " + statsList.get(8) + "\n");
-				writer.write("Industrial Grids w/o Turbines: " + statsList.get(9) + "\n");
-				writer.write("Industrial Grids w/ Turbines: " + statsList.get(10) + "\n");
-				writer.write("Total Farms: " + statsList.get(3) + "\n");
-
-				writer.close();
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} else if (!placeTurbinesNearFarms) {
+			} // End for Loop
 			
-			try {
-				file = new File(fileName);
-				file.createNewFile();
-				writer = new FileWriter(file);
-
-				for (State state : allStatesUsed) {
-
-					writer.write(state.getName() + "\n");
-					writer.write("\tUsed Land: " + state.usedLand + "(ft^2)\n");
-					writer.write("\tUsed Land: " + convertSqFeet_ToSqAcre(state.usedLand) + "(acre^2)\n");
-					writer.write("\tUsed Land: " + covertSqFeet_ToSqMiles(state.usedLand) + "(mi^2)\n");
-					writer.write("\tPower Gen: " + state.powerGenerated + " (kWh)\n");
-					writer.write("\tTurbine 262's: " + state.windTurbineTypes[0] + "\n");
-					writer.write("\tTurbine 295's: " + state.windTurbineTypes[1] + "\n");
-					writer.write("\tTurbine 328's: " + state.windTurbineTypes[2] + "\n");
-					writer.write("\tMicro Grid: " + state.microGrids_Used + "\n");
-					writer.write("\tIndustrial Grids: " + state.industrialGrids_Used + "\n");
-				}
-
-				writer.write("\nTotal Power Gen: " + statsList.get(0) + " (kWh)\n");
-				writer.write("Needed Power Gen: " + targetHours + " (kWh)\n");
-				writer.write("PanelCount: " + statsList.get(1) + "\n");
-				writer.write("Used Land: " + statsList.get(2) + "(ft^2)\n");
-				writer.write("Used Land: " + convertSqFeet_ToSqAcre(statsList.get(2)) + "(acre^2)\n");
-				writer.write("Used Land: " + covertSqFeet_ToSqMiles(statsList.get(2)) + "(mi^2)\n");
-				writer.write("Turbine 262's: " + statsList.get(7) + "\n");
-				writer.write("Turbine 295's: " + statsList.get(8) + "\n");
-				writer.write("Turbine 328's: " + statsList.get(9) + "\n");
-				writer.write("Micro Grid: " + statsList.get(5) + "\n");
-				writer.write("Industrial Grids: " + statsList.get(6) + "\n");
-				writer.write("Solar Farms: " + statsList.get(4) + "\n");
-				writer.write("'Wind Farms': " + statsList.get(10) + "\n");
-				writer.write("Total Farms: " + statsList.get(3) + "\n");
-
-				writer.close();
-
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			// Writing full Test (not individual state stats)
 			
+			writer.write("\nTotal Power Gen: " + statsList.get(0) + " (kWh)\n");
+			writer.write("\tNeeded Power Gen: " + targetHours + " (kWh)\n");
+			writer.write("\tUsed Land: " + statsList.get(2) + "(ft^2)\n");
+			writer.write("\tUsed Land: " + Conversions.convertSqFeet_ToSqAcre(statsList.get(2)) + "(acre^2)\n");
+			writer.write("\tUsed Land: " + Conversions.convertSqFeet_ToSqMiles(statsList.get(2)) + "(mi^2)\n");
+			writer.write("\tMicroGrids: " + statsList.get(5) + "\n");
+			writer.write("\tIndustrialGrids: " + statsList.get(6) + "\n");
+			writer.write("\tPanelCount: " + statsList.get(1) + "\n");
+			writer.write("\tTotal SolarFarms: " + statsList.get(4) + "\n");
+			writer.write("\tTurbine 262's: " + statsList.get(7) + "\n");
+			writer.write("\tTurbine 295's: " + statsList.get(8) + "\n");
+			writer.write("\tTotal WindFarms: " + statsList.get(10) + "\n");
+			writer.write("\tTotal Farms: " + statsList.get(3) + "\n");
+			
+			writer.close();
+			
+		} catch (IOException e) {
+			System.out.println(e);
 		}
 		
 	} // End writeTest
-	
-	/**
-	 ** Converts ft^2 to acres^2
-	 ** 
-	 ** @param feet = passed ft^2
-	 ** @return acres = conversion of feet to acres
-	 **/
-	
-	public static double convertSqFeet_ToSqAcre(long feet) {
-		
-		int SqFoot_ToSqAcre = 43560;
-		
-		return (feet / SqFoot_ToSqAcre);
-	} // End convertSqFeet_ToSqAcre
-
-	/**
-	 ** Converts ft^2 to miles^2
-	 ** 
-	 ** @param feet = passed ft^2
-	 ** @return acres = conversion of feet to miles
-	 **/
-	
-	public static long covertSqFeet_ToSqMiles(long feet) {
-		
-		// This represents how many square Feet are in 1 square Mile		
-		long squareMilesToSquareFeet = 27878400L;
-
-		return (long) Math.ceil(feet / squareMilesToSquareFeet);
-	} // End covertSqFeet_ToSqMiles
 
 	/**
 	 ** Writes the average stats to a designated file
@@ -807,20 +602,21 @@ public class Renewable_Energy {
 	
 	public static void writeAverages(Integer tests) {
 
-		String fileName = "test_results";
+		String fileName = "avg_results.txt";
 
 		try {
 			file = new File(fileName);
 			file.createNewFile();
 			writer = new FileWriter(file);
-
-			writer.write("avgPanelCount: " + (avgPanelCount / tests) + "\n");
-			writer.write("avgEnergyGen: " + (avgEnergyGen / tests) + " (kWh)\n");
-			writer.write("avgMiles: " + convertSqFeet_ToSqAcre(avgMiles / tests) + " (acre^2)\n");
-			writer.write("avgMiles: " + covertSqFeet_ToSqMiles(avgMiles / tests) + " (mi^2)\n");
-			writer.write("avgFarmsWithTurbine: " + (avgFarmsWithTurbine / tests) + "\n");
-			writer.write("avgFarmsWithoutTurbine: " + (avgFarmsWithoutTurbine / tests) + "\n");
-			writer.write("avgFarmTotal: " + (avgFarmTotal / tests));
+			
+			writer.write("avg EnergyGen: " + (avgEnergyGen / tests) + " (kWh)\n");
+			writer.write("avg Miles: " + Conversions.convertSqFeet_ToSqAcre(avgFeet / tests) + " (acre^2)\n");
+			writer.write("avg Miles: " + Conversions.convertSqFeet_ToSqMiles(avgFeet / tests) + " (mi^2)\n");
+			writer.write("avg SolarFarms: " + (avgSolarFarms / tests) + "\n");
+			writer.write("avg PanelCount: " + (avgPanelCount / tests) + "\n");
+			writer.write("avg WindFarms: " + (avgWindFarms / tests) + "\n");
+			writer.write("avg WindFarms: " + (avgTurbineCount / tests) + "\n");
+			writer.write("avg FarmTotal: " + (avgFarmTotal / tests));
 
 			writer.close();
 
@@ -828,6 +624,26 @@ public class Renewable_Energy {
 			e.printStackTrace();
 		}
 	} // End writeAverages
+	
+	public static void clear() {
+		
+		// Resetting avg Variables
+		
+		avgPanelCount = 0;
+		avgTurbineCount = 0;
+		avgEnergyGen = 0;
+		avgFeet = 0;
+		avgSolarFarms = 0;
+		avgWindFarms = 0;
+		avgFarmTotal = 0;
+		
+		// Clearing all Lists containing a state for multiple tests
+		
+		useableSolarStates.clear();
+		useableWindStates.clear();
+		states.clear();
+		
+	}
 	
 	/**
 	 ** Used for updating the "states.txt" file

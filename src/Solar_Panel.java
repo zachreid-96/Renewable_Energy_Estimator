@@ -8,8 +8,8 @@ public class Solar_Panel {
 
 	private int cells;
 
-	private int wattLow; // rated in watts
-	private int wattHigh; // rated in watts
+	private int wattRating; // rated in watts
+	private int price;
 
 	public Solar_Panel() {
 
@@ -18,20 +18,19 @@ public class Solar_Panel {
 
 		this.cells = 0;
 
-		this.wattLow = 0;
-		this.wattHigh = 0;
+		this.wattRating = 0;
 
 	} // End default (empty) constructor
 
-	public Solar_Panel(double height, double width, int cells, int low_Watt, int high_Watt) {
+	public Solar_Panel(double height, double width, int cells, int wattRating, int price) {
 
 		this.width = width; // length wise (longer)
 		this.height = height; // height (shorter)
 
 		this.cells = cells;
 
-		this.wattLow = low_Watt;
-		this.wattHigh = high_Watt;
+		this.wattRating = wattRating;
+		this.price = price;
 
 	} // End full constructor
 
@@ -51,23 +50,19 @@ public class Solar_Panel {
 	public int getCells() {
 		return this.cells;
 	}
-
-	public int getWattLow() {
-		return this.wattLow;
-	}
-
-	public int getWattHigh() {
-		return this.wattHigh;
-	}
-
-	public double getAvgWatt() {
-		return (this.wattLow + this.wattHigh) / 2;
-	}
 	
+	public int getPrice() {
+		return this.price;
+	}
+
+	public int getWattRating() {
+		return this.wattRating;
+	}
+
 	// Estimates Power Output in kW based on passed sunHours
 	
 	public double getYearWatt(double sunHours) {
-		return (getAvgWatt() * sunHours * 365);
+		return (this.wattRating * sunHours * 365 / 1000);
 	}
 
 } // End class Solar_Panel

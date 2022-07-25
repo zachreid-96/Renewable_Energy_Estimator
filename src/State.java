@@ -22,15 +22,11 @@ public class State {
 	private long useableLand;
 	public long usedLand;
 	public long powerGenerated;
-	public int industrialFarm_withTurbine;
-	public int industrialFarm_withoutTurbine;
-	public int microGrid_withTurbine;
-	public int microGrid_withoutTurbine;
-	public int windTurbinesUsed;
-	public int solarFarmsUsed;
-	public int[] windTurbineTypes;
-	public int microGrids_Used;
-	public int industrialGrids_Used;
+	public long[] microGrids_Used;
+	public long[] industrialGrids_Used;
+	public long[] windFarms_262;
+	public long[] windFarms_295;
+	public boolean used;
 	
 	/** Variable Names Explained (FOR FORMULAS)
 	 **
@@ -54,15 +50,11 @@ public class State {
 		this.useableLand = 0;
 		this.usedLand = 0;
 		this.powerGenerated = 0;
-		this.industrialFarm_withTurbine = 0;
-		this.industrialFarm_withoutTurbine = 0;
-		this.windTurbinesUsed = 0;
-		this.solarFarmsUsed = 0;
-		this.microGrid_withoutTurbine = 0;
-		this.microGrid_withTurbine = 0;
-		this.windTurbineTypes = new int[] { 0, 0, 0 };
-		this.microGrids_Used = 0;
-		this.industrialGrids_Used = 0;
+		this.microGrids_Used = new long[] {0,0};
+		this.industrialGrids_Used = new long[] {0,0};
+		this.windFarms_262 = new long[] {0,0};
+		this.windFarms_295 = new long[] {0,0};
+		this.used = false;
 	}
 	
 	// Manual entry State Constructor
@@ -75,22 +67,19 @@ public class State {
 		this.elevation = elevation;
 		this.temp = temp;
 		this.humidity = humid;
-		this.useableLand = setUseableLand();
+		this.useableLand = (int) Math.floor(Conversions.convertMiles_ToSqFeet(this.miles) * 0.01);
 		this.usedLand = 0;
 		this.powerGenerated = 0;
-		this.industrialFarm_withTurbine = 0;
-		this.industrialFarm_withoutTurbine = 0;
-		this.windTurbinesUsed = 0;
-		this.solarFarmsUsed = 0;
-		this.microGrid_withoutTurbine = 0;
-		this.microGrid_withTurbine = 0;
-		this.windTurbineTypes = new int[] { 0, 0, 0 };
-		this.microGrids_Used = 0;
-		this.industrialGrids_Used = 0;
+		this.microGrids_Used = new long[] {0,0};
+		this.industrialGrids_Used = new long[] {0,0};
+		this.windFarms_262 = new long[] {0,0};
+		this.windFarms_295 = new long[] {0,0};
+		this.used = false;
 		
 	} // End full Constructor
 	
 	// File String State Constructor
+	// Allocates only 1% of state to be used
 	
 	public State(String state) {
 		
@@ -103,28 +92,15 @@ public class State {
 		this.elevation = parseInt(state_String[4].split(": ")[1]);
 		this.temp = parseDouble(state_String[5].split(": ")[1]);
 		this.humidity = parseInt(state_String[6].split(": ")[1]);
-		this.useableLand = setUseableLand();
+		this.useableLand = (long) Math.floor(Conversions.convertMiles_ToSqFeet(this.miles * 0.01));
 		this.usedLand = 0;
 		this.powerGenerated = 0;
-		this.industrialFarm_withTurbine = 0;
-		this.industrialFarm_withoutTurbine = 0;
-		this.windTurbinesUsed = 0;
-		this.solarFarmsUsed = 0;
-		this.microGrid_withoutTurbine = 0;
-		this.microGrid_withTurbine = 0;
-		this.windTurbineTypes = new int[] { 0, 0, 0 };
-		this.microGrids_Used = 0;
-		this.industrialGrids_Used = 0;
+		this.microGrids_Used = new long[] {0,0};
+		this.industrialGrids_Used = new long[] {0,0};
+		this.windFarms_262 = new long[] {0,0};
+		this.windFarms_295 = new long[] {0,0};
+		this.used = false;
 	} // End Constructor
-	
-	private long setUseableLand() {
-		
-		long squareMilesToSquareFeet = 27878400L;
-		
-		// Only allocating 1% of the Total State Land Area for Farm Useage
-		
-		return (long) Math.ceil(this.miles * 0.01 * squareMilesToSquareFeet);
-	} // End setUseableLand
 	
 	// Dynamically Calculates Air Density for differing heights of Wind Turbines used
 	

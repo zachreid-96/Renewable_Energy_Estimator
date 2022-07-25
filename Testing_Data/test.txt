@@ -1,0 +1,50 @@
+Iowa
+	Used Land: 4159725265(ft^2)
+	Used Land: 95494.15208907254(acre^2)
+	Used Land: 149.20961263917584(mi^2)
+	Power Gen: 2310973568 (kWh)
+	MicroGrids: 0 || Total Panels: 0
+	IndustrialGrids: 0 || Total Panels: 0
+	WindFarms_262: 0 || Total Turbines: 0
+	WindFarms_295: 4 || Total Turbines: 643
+Minnesota
+	Used Land: 2283643886(ft^2)
+	Used Land: 52425.249908172635(acre^2)
+	Used Land: 81.91445298151974(mi^2)
+	Power Gen: 908259166 (kWh)
+	MicroGrids: 0 || Total Panels: 0
+	IndustrialGrids: 0 || Total Panels: 0
+	WindFarms_262: 0 || Total Turbines: 0
+	WindFarms_295: 2 || Total Turbines: 353
+Tennessee
+	Used Land: 1921366102(ft^2)
+	Used Land: 44108.4963728191(acre^2)
+	Used Land: 68.91952558252984(mi^2)
+	Power Gen: 620623033 (kWh)
+	MicroGrids: 0 || Total Panels: 0
+	IndustrialGrids: 0 || Total Panels: 0
+	WindFarms_262: 0 || Total Turbines: 0
+	WindFarms_295: 2 || Total Turbines: 297
+Wisconsin
+	Used Land: 1449111134(ft^2)
+	Used Land: 33267.01409550046(acre^2)
+	Used Land: 51.979709524219466(mi^2)
+	Power Gen: 623504788 (kWh)
+	MicroGrids: 0 || Total Panels: 0
+	IndustrialGrids: 0 || Total Panels: 0
+	WindFarms_262: 0 || Total Turbines: 0
+	WindFarms_295: 1 || Total Turbines: 224
+
+Total Power Gen: 4463360555 (kWh)
+	Needed Power Gen: 4120000000 (kWh)
+	Used Land: 9813846387(ft^2)
+	Used Land: 225294.91246556473(acre^2)
+	Used Land: 352.0233007274449(mi^2)
+	MicroGrids: 0
+	IndustrialGrids: 0
+	PanelCount: 0
+	Total SolarFarms: 0
+	Turbine 262's: 0
+	Turbine 295's: 9
+	Total WindFarms: 9
+	Total Farms: 9

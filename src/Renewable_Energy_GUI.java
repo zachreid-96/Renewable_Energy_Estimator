@@ -35,7 +35,8 @@ public class Renewable_Energy_GUI extends Application {
 	static boolean state = true;
 
 	static ArrayList<CheckBox> windTurbines = new ArrayList<CheckBox>();
-	static ArrayList<CheckBox> farmTypes = new ArrayList<CheckBox>();
+	static ArrayList<CheckBox> solarFarmTypes = new ArrayList<CheckBox>();
+	static ArrayList<CheckBox> windFarmTypes = new ArrayList<CheckBox>();
 	static ArrayList<CheckBox> solarPanels = new ArrayList<CheckBox>();
 
 	static String wattChoice = " kW";
@@ -84,7 +85,7 @@ public class Renewable_Energy_GUI extends Application {
 
 		// Solar Panel Farm Layout Options
 
-		Text solarFarmLayouts = new Text("Solar Panel Layouts:");
+		Text solarFarmLayouts = new Text("Solar Farm Layouts:");
 		solarFarmLayouts.setStyle(text_Font);
 		//solarFarmLayouts.setStyle(text_Color);
 
@@ -118,16 +119,20 @@ public class Renewable_Energy_GUI extends Application {
 		Text solarPanelOptions = new Text("Solar Panel Types:");
 		solarPanelOptions.setStyle(text_Font);;
 
-		CheckBox residentialPanel = new CheckBox("Residential Panel (60 cells)");
-		residentialPanel.setStyle(text_Font);
+		CheckBox monoPERC_60x120_345 = new CheckBox("Mono PERC 60 Cell - 345W");
+		monoPERC_60x120_345.setStyle(text_Font);
 		
-		CheckBox industrialPanel = new CheckBox("Industrial Panel (72 cells)");
-		industrialPanel.setStyle(text_Font);
+		CheckBox monoPERC_66x132_390 = new CheckBox("Mono PERC 66 Cell - 390W");
+		monoPERC_66x132_390.setStyle(text_Font);
+		
+		CheckBox monoPERC_72x144_415 = new CheckBox("Mono PERC 72 Cell - 415W");
+		monoPERC_72x144_415.setStyle(text_Font);
 
-		VBox solarPanelVBOX = new VBox(10, residentialPanel, industrialPanel);
+		VBox solarPanelVBOX = new VBox(10, monoPERC_60x120_345, monoPERC_66x132_390, monoPERC_72x144_415);
 
-		VBox.setMargin(residentialPanel, new Insets(0, 0, 0, 10));
-		VBox.setMargin(industrialPanel, new Insets(0, 0, 0, 10));
+		VBox.setMargin(monoPERC_60x120_345, new Insets(0, 0, 0, 10));
+		VBox.setMargin(monoPERC_66x132_390, new Insets(0, 0, 0, 10));
+		VBox.setMargin(monoPERC_72x144_415, new Insets(0, 0, 0, 10));
 		
 		// Creating Peak Sun Hours Slider
 
@@ -141,6 +146,24 @@ public class Renewable_Energy_GUI extends Application {
 		sliderWindSpeed.setBlockIncrement(1);
 		sliderWindSpeed.setSnapToTicks(true);
 		sliderWindSpeed.setValue(3);
+		
+		// Creating Wind Farm Options
+		
+		Text windFarmLayouts = new Text("Wind Farm Layouts:");
+		windFarmLayouts.setStyle(text_Font);
+		//solarFarmLayouts.setStyle(text_Color);
+
+		CheckBox smallWindFarm = new CheckBox("Small (10-150 Turbines)");
+		smallWindFarm.setStyle(text_Font);
+		//microFarm.setStyle(text_Color);
+		
+		CheckBox largeWindFarm = new CheckBox("Large (100-250 Turbines)");
+		largeWindFarm.setStyle(text_Font);
+
+		VBox windFarmTypesVBOX = new VBox(10, smallWindFarm, largeWindFarm);
+
+		VBox.setMargin(smallWindFarm, new Insets(0, 0, 0, 10));
+		VBox.setMargin(largeWindFarm, new Insets(0, 0, 0, 10));
 		
 		// Creating Land Wind Turbine Options
 
@@ -167,36 +190,8 @@ public class Renewable_Energy_GUI extends Application {
 		windTurbine_328.setStyle(text_Font);
 		windTurbine_328.setDisable(true);
 
-		VBox seaTurbineChechBoxes = new VBox(10, windTurbine_328);
+		VBox seaTurbineCheckBoxes = new VBox(10, windTurbine_328);
 		VBox.setMargin(windTurbine_328, new Insets(0, 0, 0, 10));
-		
-		// Creating Distinction between Turbines and Solar Grids
-		
-		ToggleGroup turbineDistinctionGroup = new ToggleGroup();
-		
-		Text turbineDistinction = new Text("Place Turbines near Solar Farms?");
-		turbineDistinction.setStyle(text_Font);
-		
-		RadioButton yes = new RadioButton();
-		yes.setText("Yes");
-		yes.setToggleGroup(turbineDistinctionGroup);
-		yes.setSelected(true);
-		yes.setStyle(text_Font);
-		
-		yes.selectedProperty()
-		.addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-			turbinesNearSolarFarms = true;
-		});
-		
-		RadioButton no = new RadioButton();
-		no.setText("No");
-		no.setToggleGroup(turbineDistinctionGroup);
-		no.setStyle(text_Font);
-		
-		no.selectedProperty()
-		.addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-			turbinesNearSolarFarms = false;
-		});
 
 		// Creating Desired KiloWatt TextField Entry
 		
@@ -257,6 +252,17 @@ public class Renewable_Energy_GUI extends Application {
 			
 		});
 		
+		// Adding Listeners to Solar Farm Layout CheckBoxes
+
+		smallWindFarm.selectedProperty()
+				.addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+					alterWindFarmTypes(smallWindFarm);
+				});
+		largeWindFarm.selectedProperty()
+				.addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+					alterWindFarmTypes(largeWindFarm);
+				});
+		
 		// Adding Listeners to Wind Turbine CheckBoxes
 
 		windTurbine_265.selectedProperty()
@@ -276,22 +282,26 @@ public class Renewable_Energy_GUI extends Application {
 
 		microFarm.selectedProperty()
 				.addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-					alterFarmTypes(microFarm);
+					alterSolarFarmTypes(microFarm);
 				});
 		industrialFarm.selectedProperty()
 				.addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-					alterFarmTypes(industrialFarm);
+					alterSolarFarmTypes(industrialFarm);
 				});
 
 		// Adding Listeners to Solar Panel CheckBoxes
 
-		residentialPanel.selectedProperty()
+		monoPERC_60x120_345.selectedProperty()
 				.addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-					alterSolarPanels(residentialPanel);
+					alterSolarPanels(monoPERC_60x120_345);
 				});
-		industrialPanel.selectedProperty()
+		monoPERC_66x132_390.selectedProperty()
 				.addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
-					alterSolarPanels(industrialPanel);
+					alterSolarPanels(monoPERC_66x132_390);
+				});
+		monoPERC_72x144_415.selectedProperty()
+				.addListener((ObservableValue<? extends Boolean> ov, Boolean old_val, Boolean new_val) -> {
+					alterSolarPanels(monoPERC_72x144_415);
 				});
 		
 		// Creating Number of Tests Slider
@@ -331,7 +341,7 @@ public class Renewable_Energy_GUI extends Application {
 					}
 				}
 				Renewable_Energy.setHours(tempHours);
-				runTest(sliderPSH.getValue(), sliderWindSpeed.getValue(), (int) sliderTestNumber.getValue());
+				checkTest(sliderPSH.getValue(), sliderWindSpeed.getValue(), (int) sliderTestNumber.getValue());
 			}
 		};
 
@@ -356,22 +366,21 @@ public class Renewable_Energy_GUI extends Application {
 
 		grid.add(sliderTextWind, 2, 4);
 		grid.add(sliderWindSpeed, 2, 5, 2, 1);
+		
+		// Adding Wind Farm Layouts to grid
+		
+		grid.add(windFarmLayouts, 2, 0, 2, 1);
+		grid.add(windFarmTypesVBOX, 2, 1);
 
 		// Adding Land Wind Turbine Options to grid
 
-		grid.add(landWindTurbineOptions, 2, 0, 2, 1);
-		grid.add(landTurbineVBOX, 2, 1);
+		grid.add(landWindTurbineOptions, 2, 2, 2, 1);
+		grid.add(landTurbineVBOX, 2, 3);
 
 		// Adding OffShore Wind Turbine Options to grid (CURRENTLY UNIMPLEMENTED)
 		
-		grid.add(offShoreWindTurbineOptions, 2, 2, 2, 1);
-		grid.add(seaTurbineChechBoxes, 2, 3);
-		
-		// Adding Turbine Distinction Buttons to grid
-		
-		grid.add(turbineDistinction, 2, 6, 2, 1);
-		grid.add(yes, 2, 7);
-		grid.add(no, 2, 8);
+		//grid.add(offShoreWindTurbineOptions, 2, 2, 2, 1);
+		//grid.add(seaTurbineChechBoxes, 2, 3);
 		
 		// Adding kiloWatt_USER to grid
 		
@@ -451,85 +460,127 @@ public class Renewable_Energy_GUI extends Application {
 
 	// Adds/Removes Solar Farm Layouts from Active List
 
-	private static void alterFarmTypes(CheckBox box) {
+	private static void alterSolarFarmTypes(CheckBox box) {
 
 		if (box.isSelected()) {
-			farmTypes.add(box);
+			solarFarmTypes.add(box);
 		} else {
-			farmTypes.remove(farmTypes.indexOf(box));
+			solarFarmTypes.remove(solarFarmTypes.indexOf(box));
+		}
+	} // End alterFarmTypes
+	
+	private static void alterWindFarmTypes(CheckBox box) {
+
+		if (box.isSelected()) {
+			windFarmTypes.add(box);
+		} else {
+			windFarmTypes.remove(windFarmTypes.indexOf(box));
 		}
 	} // End alterFarmTypes
 
-	private static void runTest(double valuePSH, double valueWindSpeed, int numTests) {
+	private static void checkTest(double valuePSH, double valueWindSpeed, int numTests) {
 		
-		if (farmTypes.size() < 1 || solarPanels.size() < 1) {
+		if ((solarFarmTypes.size() == 0 && solarPanels.size() > 0)
+				|| (solarFarmTypes.size() > 0 && solarPanels.size() == 0)) {
 			
-			Alert alert_MismatchedInputs = new Alert(AlertType.ERROR, "Must include Solar Panel Layout and Solar Panel Type!", ButtonType.OK);
+			Alert alert_MismatchedInputs = new Alert(AlertType.ERROR, "Must include Solar Panel Farm and Solar Panel Type!", ButtonType.OK);
 			alert_MismatchedInputs.setTitle("Mismatched Inputs!");
 			alert_MismatchedInputs.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
 			alert_MismatchedInputs.show();
 			
-		} else if (farmTypes.size() > 0 && solarPanels.size() > 0) {
+		} else if ((windFarmTypes.size() == 0 && windTurbines.size() > 0)
+				|| (windFarmTypes.size() > 0 && windTurbines.size() == 0)) {
 			
-			for (CheckBox box : windTurbines) {
-				Renewable_Energy.initializeEnergySources(box.toString().split("'")[1]);
-				//System.out.println(box.toString().split("'")[1]);
-			}
-
-			for (CheckBox box : farmTypes) {
-				Renewable_Energy.initializeEnergySources(box.toString().split("'")[1]);
-				//System.out.println(box.toString().split("'")[1]);
-			}
-
-			for (CheckBox box : solarPanels) {
-				Renewable_Energy.initializeEnergySources(box.toString().split("'")[1]);
-				//System.out.println(box.toString().split("'")[1]);
-			}
+			Alert alert_MismatchedInputs = new Alert(AlertType.ERROR, "Must include Wind Farm and Turbine Type!", ButtonType.OK);
+			alert_MismatchedInputs.setTitle("Mismatched Inputs!");
+			alert_MismatchedInputs.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+			alert_MismatchedInputs.show();
 			
-			String message = "DONE";
+		} else if ((solarFarmTypes.size() > 0 && solarPanels.size() > 0)
+				&& (windFarmTypes.size() > 0 && windTurbines.size() > 0)) {
 			
-			Renewable_Energy.cleanDirectory();
+			System.out.println("HERE - logic 1");
+			runTest(valuePSH, valueWindSpeed, numTests);
 			
-			// Running ONLY ONE (1) Test
+		} else if ((solarFarmTypes.size() > 0 && solarPanels.size() > 0)
+				|| (windFarmTypes.size() > 0 && windTurbines.size() > 0)) {
 			
-			if (numTests == 1) {
-				
-				Renewable_Energy.readStates();
-				
-				Renewable_Energy.populateUseableStates(turbinesNearSolarFarms, valuePSH, valueWindSpeed);
-				
-				Renewable_Energy.getStats(turbinesNearSolarFarms, null);
-				
-				Renewable_Energy.clearStats();
-				
-				message = "Done Running (x" + numTests + ") Test!\n";
-				message += "Tests found in .../Testing_Data/test.txt";
-				
-			} else if (numTests > 1) { // Running MORE than ONE (1) Test
-				
-				Renewable_Energy.readStates();
-				
-				Renewable_Energy.populateUseableStates(turbinesNearSolarFarms, valuePSH, valueWindSpeed);
-				
-				for (Integer i = 0; i < numTests; i++) {
-					
-					Renewable_Energy.getStats(turbinesNearSolarFarms, i);
-				
-					Renewable_Energy.clearStats();
-				}
-				
-				Renewable_Energy.writeAverages(numTests);
-				
-				message = "Done Running (x" + numTests + ") Tests!\n";
-				message += "Tests found in .../test_results.txt\n";
-				message += "Tests found in .../Testing_Data/test_##.txt";
-			}
-			
-			Alert alert_TestsDone = new Alert(AlertType.INFORMATION, message, ButtonType.OK);
-			alert_TestsDone.setTitle("Done!");
-			alert_TestsDone.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
-			alert_TestsDone.show();
+			System.out.println("HERE - logic 2");
+			runTest(valuePSH, valueWindSpeed, numTests);
 			
 		} // End Run If/Else Block
-	} // End runTest
+	} // End checkTest
+	
+	private static void runTest(double valuePSH, double valueWindSpeed, int numTests) {
+		
+		for (CheckBox box : windFarmTypes) {
+			Renewable_Energy.initializeEnergySources(box.toString().split("'")[1]);
+			//System.out.println(box.toString().split("'")[1]);
+		}
+
+		for (CheckBox box : windTurbines) {
+			Renewable_Energy.initializeEnergySources(box.toString().split("'")[1]);
+			//System.out.println(box.toString().split("'")[1]);
+		}
+		
+		for (CheckBox box : solarFarmTypes) {
+			Renewable_Energy.initializeEnergySources(box.toString().split("'")[1]);
+			//System.out.println(box.toString().split("'")[1]);
+		}
+
+		for (CheckBox box : solarPanels) {
+			Renewable_Energy.initializeEnergySources(box.toString().split("'")[1]);
+			//System.out.println(box.toString().split("'")[1]);
+		}
+		
+		String message = "DONE";
+		
+		Renewable_Energy.cleanDirectory();
+		
+		// Running ONLY ONE (1) Test
+		
+		if (numTests == 1) {
+			
+			Renewable_Energy.readStates();
+			
+			Renewable_Energy.populateUseableStates(valuePSH, valueWindSpeed);
+			
+			Renewable_Energy.getStats(null);
+			
+			Renewable_Energy.clearStats();
+			
+			Renewable_Energy.clear();
+			
+			message = "Done Running (x" + numTests + ") Test!\n";
+			message += "Tests found in .../Testing_Data/test.txt";
+			
+		} else if (numTests > 1) { // Running MORE than ONE (1) Test
+			
+			Renewable_Energy.readStates();
+			
+			Renewable_Energy.populateUseableStates(valuePSH, valueWindSpeed);
+			
+			for (Integer i = 0; i < numTests; i++) {
+				
+				Renewable_Energy.getStats(null);
+			
+				Renewable_Energy.clearStats();
+			}
+			
+			Renewable_Energy.writeAverages(numTests);
+			
+			Renewable_Energy.clear();
+			
+			message = "Done Running (x" + numTests + ") Tests!\n";
+			message += "Tests found in .../test_results.txt\n";
+			message += "Tests found in .../Testing_Data/test_##.txt";
+		}
+		
+		Alert alert_TestsDone = new Alert(AlertType.INFORMATION, message, ButtonType.OK);
+		alert_TestsDone.setTitle("Done!");
+		alert_TestsDone.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+		alert_TestsDone.show();
+		
+	}
+	
 } // End class Renewable_Energy_GUI

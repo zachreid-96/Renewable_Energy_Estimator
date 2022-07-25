@@ -6,6 +6,8 @@ public class Wind_Turbine {
 	private int ratedWatt; // rated kiloWatts (converted from MegaWatts)
 	private double sweepingArea;
 	private String name;
+	private double diameter = -1;
+	private double area = -1;
 	
 	public Wind_Turbine() {
 		this.height = 0;
@@ -39,12 +41,21 @@ public class Wind_Turbine {
 		return this.ratedWatt;
 	}
 	
-	// this.armLength * 2 = diameter
 	// * 7 = total unobstructed operating area
 	// needs to be 7 rotor diameters away from other objects to work effectively
 	public double getArea() {
-		return (this.armLength * 2 * 7);
+
+		if (area == -1) {
+			this.area = (Math.PI * Math.pow(this.armLength * 2 * 3.5, 2));
+			this.diameter = (this.armLength * 2 * 3.5);
+		}
+
+		return this.area;
 	} // End getArea
+	
+	public double getDiameter() {
+		return this.diameter;
+	}
 	
 	// Gets the 'real' efficiency of a turbine using random numGen withing specifications
 	public double getEfficiency() {
@@ -87,7 +98,7 @@ public class Wind_Turbine {
 		
 		double potentialWindPower = 0.5 * airDensity * Math.pow(SpeedOfWind, 3) * this.sweepingArea;
 		
-		return (potentialWindPower / 1000);
+		return potentialWindPower;
 	} // End getPotentialPower
 	
 	public long getOutputPower(double[] windSpeed, double airDensity) {
@@ -110,7 +121,7 @@ public class Wind_Turbine {
 			
 			long estimatedPower = (long) Math.ceil(realEfficiency * potentialWindPower);
 			
-			if (estimatedPower < 25) {
+			if (estimatedPower < 2500) {
 				return -1;
 			}
 			
